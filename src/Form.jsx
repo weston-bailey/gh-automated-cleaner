@@ -8,8 +8,8 @@ import axios from 'axios'
 const Form = () => {
   const [search, setSearch] = useState('weston-bailey')
   const [repos, setRepos] = useState([])
+  const [forkTarget, setForkTarget] = useState('ga-sei-lessons')
 
-  // this only runs once
   useEffect(() => {
     fetchRepos()
   }, [search])
@@ -30,7 +30,36 @@ const Form = () => {
     }
   }
 
-  const handleMoveClick = async e => {}
+  const handleMoveClick = async (e, repo) => {
+    try {
+      // move repo to org
+      const options = {
+        headers: {
+          accept: 'application/vnd.github.v3+json',
+          "Authorization": `token ${process.env.REACT_APP_GH_TOKEN}`
+        }
+      }
+
+      const body = {
+        organization: forkTarget
+      }
+
+      const url = `https://api.github.com/repos/${search}/${repo}`
+      const response = await axios.post(url + '/forks', body, options)
+      console.log(response)
+      console.log(response.status)
+      const delRes = await axios.delete(url, options)
+      console.log(response)
+      console.log(response.data)
+      // these won't be up to date anyways
+      // setTimeout(() =>  fetchRepos(), 500)
+    } catch (err) {
+      console.warn(err)
+      setTimeout(() => {
+        handleMoveClick(e, repo)
+      }, 1000)
+    }
+  }
   // map the user's repos to a div
   const divs = repos.map((repo, idx) => (
           
@@ -43,7 +72,7 @@ const Form = () => {
       </a> 
 
       <button
-        onClick={handleMoveClick}
+        onClick={e => handleMoveClick(e, repo.name)}
       >
         move
       </button>
@@ -53,10 +82,20 @@ const Form = () => {
   return (
     <div>
       <form>
+        <label htmlFor='search'>Search:</label>
         <input 
           type="text"
+          id='search'
           value={search}
           onChange={e => setSearch(e.target.value)}
+        />
+
+        <label htmlFor='forkTarget'>forkTarget:</label>
+        <input 
+          type="text"
+          id='forkTarget'
+          value={forkTarget}
+          onChange={e => setForkTarget(e.target.value)}
         />
       </form>
 
